@@ -93,7 +93,7 @@ thr_create(void *stack_base, size_t stack_size, void *(*start_func) (void*),
 
 	/* This function ignores the THR_BOUND flag, since NPTL doesn't seem to support PTHREAD_SCOPE_PROCESS */
 
-	ret = pthread_create(new_thread_ID, &attr, start_func, arg);
+	ret = pthread_create(new_thread_ID, &attr, start_func, arg, 0);
 
 	pthread_attr_destroy(&attr);
 

@@ -1074,7 +1074,7 @@ void* thread::do_remote_thread_local_var(void* var)
     return tls_this + offset;
 }
 
-thread::thread(std::function<void ()> func, attr attr, bool main, bool app)
+thread::thread(std::function<void ()> func, attr attr, bool main, bool app, unsigned long stackRand)
     : _func(func)
     , _runtime(thread::priority_default)
     , _detached_state(new detached_state(this))
@@ -1141,7 +1141,7 @@ thread::thread(std::function<void ()> func, attr attr, bool main, bool app)
     if (!main && sched::s_current) {
         remote_thread_local_var(s_current) = this;
     }
-    init_stack();
+    init_stack(stackRand);
 
     if (_attr._detached) {
         _detach_state.store(detach_state::detached);

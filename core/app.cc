@@ -22,7 +22,13 @@
 #include "libc/pthread.hh"
 #include <osv/kernel_config_core_namespaces.h>
 
+#include <sys/random.h>
+
 using namespace boost::range;
+
+#ifndef STACK_RND_MASK
+#define STACK_RND_MASK (0x7f0 >> (PAGE_SHIFT - 12))
+#endif
 
 extern int optind;
 
@@ -243,11 +249,40 @@ void application::start()
     // FIXME: we cannot create the thread inside the constructor because
     // the thread would attempt to call shared_from_this() before object
     // is constructed which is illegal.
+    printf("here in core/start\n");
+    unsigned long temp;
+    ssize_t retValue = 0;
+
+    retValue = getrandom(&temp, sizeof(temp), 0);
+
+    if( -1 == retValue ){
+        printf("ERROR getting random number\n");
+        printf("random temp = 0x%lx\n", temp);
+        temp = 0;
+    } else if ( 1 >= retValue ){
+        printf("ERROR not enough bytes return\n");
+        printf("random temp = 0x%lx\n", temp);
+        temp = 0;
+    } else {
+        printf("random temp = 0x%lx\n", temp);
+        temp &= STACK_RND_MASK;
+        printf("random mask applied = 0x%lx\n", temp);
+        
+        temp = temp << 8;
+        printf("temp shifted 0x%lx\n", temp);
+    }
+
+
+
     override_current_app = this;
     auto err = pthread_create(&_thread, NULL, [](void *app) -> void* {
         ((application*)app)->main();
         return nullptr;
-    }, this);
+    }, this, temp);
+    // auto err = pthread_create(&_thread, NULL, [](void *app) -> void* {
+    //     ((application*)app)->main();
+    //     return nullptr;
+    // }, this, 0);
     override_current_app = nullptr;
     if (err) {
         throw launch_error("Failed to create the main thread, err=" + std::to_string(err));

@@ -14,6 +14,8 @@
 #include <osv/kernel_config_threads_default_kernel_stack_size.h>
 #include <string.h>
 #include "tls-switch.hh"
+#include <osv/mmu.hh>
+#include <sys/random.h>
 
 //
 // The last 16 bytes of the syscall stack are reserved for -
@@ -157,7 +159,7 @@ void thread::switch_to_first()
            "r10", "r11", "r12", "r13", "r14", "r15", "memory");
 }
 
-void thread::init_stack()
+void thread::init_stack(unsigned long stackRand)
 {
     auto& stack = _attr._stack;
     if (!stack.size) {
@@ -177,6 +179,16 @@ void thread::init_stack()
         (void) *((volatile char*)stack.begin + stack.size - 1);
     }
     void** stacktop = reinterpret_cast<void**>(stack.begin + stack.size);
+
+    if( 0 != stackRand ){
+        stacktop = reinterpret_cast<void**>(stack.begin + stackRand);
+        ssize_t isAligned = mmu::is_page_aligned(stacktop);
+        printf("is page aligned result = %d\n", isAligned);
+        printf("stacktop = 0x%lx\n", stacktop);
+        printf("stack.begin = 0x%lx\n", stack.begin);
+        printf("stack.size = 0x%lx\n", stack.size);
+    }
+
     _state.rbp = this;
     _state.rip = reinterpret_cast<void*>(thread_main);
     _state.rsp = stacktop;

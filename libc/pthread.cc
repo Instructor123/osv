@@ -88,7 +88,7 @@ namespace pthread_private {
     class pthread {
     public:
         explicit pthread(void *(*start)(void *arg), void *arg, sigset_t sigset,
-            const thread_attr* attr);
+            const thread_attr* attr, unsigned long stackRand);
         void start();
         static pthread* from_libc(pthread_t p);
         pthread_t to_libc();
@@ -112,12 +112,12 @@ namespace pthread_private {
     };
 
     pthread::pthread(void *(*start)(void *arg), void *arg, sigset_t sigset,
-                     const thread_attr* attr)
+                     const thread_attr* attr, unsigned long stackRand)
             : _thread(sched::thread::make([=] {
                 current_pthread = to_libc();
                 sigprocmask(SIG_SETMASK, &sigset, nullptr);
                 _retval = start(arg);
-            }, attributes(attr ? *attr : thread_attr()), false, true))
+            }, attributes(attr ? *attr : thread_attr()), false, true, stackRand))
     {
         _thread->set_cleanup([=] { delete this; });
     }
@@ -199,7 +199,7 @@ namespace pthread_private {
 using namespace pthread_private;
 
 int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
-        void *(*start_routine) (void *), void *arg)
+        void *(*start_routine) (void *), void *arg, unsigned long stackRand)
 {
     pthread *t;
     sigset_t sigset;
@@ -244,7 +244,7 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
                "CPU set.\n The cpu_set_t provided will be ignored.\n");
     }
 
-    t = new pthread(start_routine, arg, sigset, &tmp);
+    t = new pthread(start_routine, arg, sigset, &tmp, stackRand);
     *thread = t->to_libc();
     t->start();
     return 0;
