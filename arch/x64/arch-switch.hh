@@ -180,14 +180,14 @@ void thread::init_stack(unsigned long stackRand)
     }
     void** stacktop = reinterpret_cast<void**>(stack.begin + stack.size);
 
-    if( 0 != stackRand ){
-        stacktop = reinterpret_cast<void**>(stack.begin + stackRand);
-        ssize_t isAligned = mmu::is_page_aligned(stacktop);
-        printf("is page aligned result = %d\n", isAligned);
-        printf("stacktop = 0x%lx\n", stacktop);
-        printf("stack.begin = 0x%lx\n", stack.begin);
-        printf("stack.size = 0x%lx\n", stack.size);
-    }
+    // if( 0 != stackRand ){
+    //     stacktop = reinterpret_cast<void**>(stack.begin + stackRand);
+    //     ssize_t isAligned = mmu::is_page_aligned(stacktop);
+    //     printf("is page aligned result = %d\n", isAligned);
+    //     printf("stacktop = 0x%lx\n", stacktop);
+    //     printf("stack.begin = 0x%lx\n", stack.begin);
+    //     printf("stack.size = 0x%lx\n", stack.size);
+    // }
 
     _state.rbp = this;
     _state.rip = reinterpret_cast<void*>(thread_main);

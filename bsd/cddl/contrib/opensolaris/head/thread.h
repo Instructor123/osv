@@ -83,7 +83,7 @@ thr_create(void *stack_base, size_t stack_size, void *(*start_func) (void*),
 	assert((flags & ~THR_BOUND & ~THR_DETACHED) == 0);
 
 	pthread_attr_t attr;
-	pthread_attr_init(&attr);
+	pthread_attr_init(&attr, 0);
 
 	if (flags & THR_DETACHED)
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);

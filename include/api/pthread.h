@@ -146,7 +146,12 @@ int pthread_key_delete(pthread_key_t);
 void *pthread_getspecific(pthread_key_t);
 int pthread_setspecific(pthread_key_t, const void *);
 
-int pthread_attr_init(pthread_attr_t *);
+#ifdef __cplusplus
+int pthread_attr_init(pthread_attr_t *, unsigned long ST=0);
+#else
+int pthread_attr_init(pthread_attr_t *, unsigned long ST);
+#endif
+
 int pthread_attr_destroy(pthread_attr_t *);
 
 int pthread_attr_getguardsize(const pthread_attr_t *__restrict, size_t *__restrict);

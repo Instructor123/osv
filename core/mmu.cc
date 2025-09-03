@@ -1321,10 +1321,13 @@ void* map_anon(const void* addr, size_t size, unsigned flags, unsigned perm)
     bool search = !(flags & mmap_fixed);
     size = align_up(size, mmu::page_size);
     auto start = reinterpret_cast<uintptr_t>(addr);
+    printf("map_anon start value = 0x%lx\n", start);
+    
     auto* vma = new mmu::anon_vma(addr_range(start, start + size), perm, flags);
     PREVENT_STACK_PAGE_FAULT
     SCOPE_LOCK(vma_list_mutex.for_write());
     auto v = (void*) allocate(vma, start, size, search);
+    printf("vma-addr() (which is the _range.start value) = 0x%lx\n", vma->addr());
     if (flags & mmap_populate) {
         populate_vma(vma, v, size);
     }

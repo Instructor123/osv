@@ -27,7 +27,7 @@
 using namespace boost::range;
 
 #ifndef STACK_RND_MASK
-#define STACK_RND_MASK (0x7f0 >> (PAGE_SHIFT - 12))
+#define STACK_RND_MASK 0x3fffff000000
 #endif
 
 extern int optind;
@@ -267,18 +267,26 @@ void application::start()
         printf("random temp = 0x%lx\n", temp);
         temp &= STACK_RND_MASK;
         printf("random mask applied = 0x%lx\n", temp);
-        
-        temp = temp << 8;
-        printf("temp shifted 0x%lx\n", temp);
     }
 
 
 
     override_current_app = this;
-    auto err = pthread_create(&_thread, NULL, [](void *app) -> void* {
+    // Taken from loader.cc 845-852.
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    for (size_t ii=0; ii<sched::cpus.size(); ii++) {
+        CPU_SET(ii, &cpuset);
+    }
+    pthread_attr_t attr;
+    // Need to not pass an unsigned long then convert to void*, and probably just do a void* to begin with containing a proper value.
+    pthread_attr_init(&attr, temp);
+    pthread_attr_setaffinity_np(&attr, sizeof(cpuset), &cpuset);
+
+    auto err = pthread_create(&_thread, &attr, [](void *app) -> void* {
         ((application*)app)->main();
         return nullptr;
-    }, this, temp);
+    }, this, 0);
     // auto err = pthread_create(&_thread, NULL, [](void *app) -> void* {
     //     ((application*)app)->main();
     //     return nullptr;

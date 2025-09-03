@@ -108,7 +108,9 @@ namespace pthread_private {
         bool detached;
         cpu_set_t *cpuset;
         sched::cpu *cpu;
-        thread_attr() : stack_begin{}, stack_size{CONF_threads_default_pthread_stack_size}, guard_size{4096}, detached{false}, cpuset{nullptr}, cpu{nullptr} {}
+        void *stack_value;
+        thread_attr() : stack_begin{}, stack_size{CONF_threads_default_pthread_stack_size}, guard_size{4096}, detached{false}, cpuset{nullptr}, cpu{nullptr}, stack_value{} {}
+        thread_attr(void*ST) : stack_begin{}, stack_size{CONF_threads_default_pthread_stack_size}, guard_size{4096}, detached{false}, cpuset{nullptr}, cpu{nullptr}, stack_value{ST} {}
     };
 
     pthread::pthread(void *(*start)(void *arg), void *arg, sigset_t sigset,
@@ -149,7 +151,15 @@ namespace pthread_private {
 #else
         unsigned stack_flags = mmu::mmap_populate;
 #endif
-        void *addr = mmu::map_anon(nullptr, size, stack_flags, mmu::perm_rw);
+        void *addr = NULL;
+
+        printf("in allocate_stack, attr.stack_value = 0x%lx\n", attr.stack_value);
+        if (attr.stack_value) {
+            addr = mmu::map_anon(attr.stack_value, size, stack_flags, mmu::perm_rw);
+        } else {
+            addr = mmu::map_anon(nullptr, size, stack_flags, mmu::perm_rw);
+        }
+        // void *addr = mmu::map_anon(nullptr, size, stack_flags, mmu::perm_rw);
         mmu::mprotect(addr, attr.guard_size, 0);
         sched::thread::stack_info si{addr, size};
         si.deleter = free_stack;
@@ -655,9 +665,9 @@ int pthread_cond_clockwait(pthread_cond_t *__restrict cond,
     return EINVAL;
 }
 
-int pthread_attr_init(pthread_attr_t *attr)
+int pthread_attr_init(pthread_attr_t *attr, unsigned long ST)
 {
-    new (attr) thread_attr;
+    new (attr) thread_attr((void*)ST);
     return 0;
 }
 
