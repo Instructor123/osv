@@ -250,27 +250,7 @@ void application::start()
     // the thread would attempt to call shared_from_this() before object
     // is constructed which is illegal.
     printf("here in core/start\n");
-    unsigned long temp;
-    ssize_t retValue = 0;
-
-    retValue = getrandom(&temp, sizeof(temp), 0);
-
-    if( -1 == retValue ){
-        printf("ERROR getting random number\n");
-        printf("random temp = 0x%lx\n", temp);
-        temp = 0;
-    } else if ( 1 >= retValue ){
-        printf("ERROR not enough bytes return\n");
-        printf("random temp = 0x%lx\n", temp);
-        temp = 0;
-    } else {
-        printf("random temp = 0x%lx\n", temp);
-        temp &= STACK_RND_MASK;
-        printf("random mask applied = 0x%lx\n", temp);
-    }
-
-
-
+    
     override_current_app = this;
     // Taken from loader.cc 845-852.
     cpu_set_t cpuset;
@@ -280,13 +260,13 @@ void application::start()
     }
     pthread_attr_t attr;
     // Need to not pass an unsigned long then convert to void*, and probably just do a void* to begin with containing a proper value.
-    pthread_attr_init(&attr, temp);
+    pthread_attr_init(&attr, true);
     pthread_attr_setaffinity_np(&attr, sizeof(cpuset), &cpuset);
 
     auto err = pthread_create(&_thread, &attr, [](void *app) -> void* {
         ((application*)app)->main();
         return nullptr;
-    }, this, 0);
+    }, this);
     // auto err = pthread_create(&_thread, NULL, [](void *app) -> void* {
     //     ((application*)app)->main();
     //     return nullptr;

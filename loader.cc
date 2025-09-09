@@ -848,7 +848,7 @@ void main_cont(int loader_argc, char** loader_argv)
         CPU_SET(ii, &cpuset);
     }
     pthread_attr_t attr;
-    pthread_attr_init(&attr);
+    pthread_attr_init(&attr, false);            // Updated on 9/8/2025 to account for ASLR-based randomization in pthread_attr_init.
     pthread_attr_setaffinity_np(&attr, sizeof(cpuset), &cpuset);
     pthread_create(&pthread, &attr, do_main_thread, (void *) __app_cmdline);
     void* retval;

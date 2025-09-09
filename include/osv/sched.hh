@@ -490,7 +490,7 @@ public:
     }
 private:
     explicit thread(std::function<void ()> func, attr attributes = attr(),
-            bool main = false, bool app = false, unsigned long stackRand = 0);
+            bool main = false, bool app = false);
 
 public:
     ~thread();
@@ -730,7 +730,7 @@ private:
     void prepare_wait();
     void wait();
     void stop_wait();
-    void init_stack(unsigned long);
+    void init_stack();
     void setup_tcb();
     void free_tcb();
     void free_syscall_stack();

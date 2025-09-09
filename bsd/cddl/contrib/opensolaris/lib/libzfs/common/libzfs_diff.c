@@ -781,7 +781,7 @@ zfs_show_diffs(zfs_handle_t *zhp, int outfd, const char *fromsnap,
 	di.outputfd = outfd;
 	di.datafd = pipefd[0];
 
-	if (pthread_create(&tid, NULL, differ, &di, 0)) {
+	if (pthread_create(&tid, NULL, differ, &di)) {
 		zfs_error_aux(zhp->zfs_hdl, strerror(errno));
 		(void) close(pipefd[0]);
 		(void) close(pipefd[1]);

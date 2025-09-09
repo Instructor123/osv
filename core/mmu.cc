@@ -1319,6 +1319,7 @@ ulong populate_vma(vma *vma, void *v, size_t size, bool write = false)
 void* map_anon(const void* addr, size_t size, unsigned flags, unsigned perm)
 {
     bool search = !(flags & mmap_fixed);
+    printf("search value = %d and !(flags & mmap-fixed) = %d\n", search, !(flags & mmap_fixed));
     size = align_up(size, mmu::page_size);
     auto start = reinterpret_cast<uintptr_t>(addr);
     printf("map_anon start value = 0x%lx\n", start);

@@ -72,11 +72,7 @@ extern "C" {
 
 #define PTHREAD_BARRIER_SERIAL_THREAD (-1)
 
-#ifdef __cplusplus
-int pthread_create(pthread_t *__restrict, const pthread_attr_t *__restrict, void *(*)(void *), void *__restrict, unsigned long stackRand = 0);
-#else
-int pthread_create(pthread_t *__restrict, const pthread_attr_t *__restrict, void *(*)(void *), void *__restrict, unsigned long stackRand);
-#endif
+int pthread_create(pthread_t *__restrict, const pthread_attr_t *__restrict, void *(*)(void *), void *__restrict);
 
 int pthread_detach(pthread_t);
 _Noreturn void pthread_exit(void *);
@@ -147,9 +143,9 @@ void *pthread_getspecific(pthread_key_t);
 int pthread_setspecific(pthread_key_t, const void *);
 
 #ifdef __cplusplus
-int pthread_attr_init(pthread_attr_t *, unsigned long ST=0);
+int pthread_attr_init(pthread_attr_t *, bool enable_randomization=false);
 #else
-int pthread_attr_init(pthread_attr_t *, unsigned long ST);
+int pthread_attr_init(pthread_attr_t *, int enable_randomization);
 #endif
 
 int pthread_attr_destroy(pthread_attr_t *);

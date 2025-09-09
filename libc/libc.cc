@@ -60,7 +60,7 @@ int getrlimit(int resource, struct rlimit *rlim)
     switch (resource) {
     case RLIMIT_STACK: {
         pthread_attr_t attr;
-        pthread_attr_init(&attr);
+        pthread_attr_init(&attr, false);        // Updated on 9/8/2025 to account for ASLR-based randomization in pthread_attr_init.
         size_t stacksize;
         pthread_attr_getstacksize(&attr, &stacksize);
         set(stacksize);

@@ -34,7 +34,17 @@
 #include <osv/kernel_config_lazy_stack_invariant.h>
 #include <osv/kernel_config_threads_default_pthread_stack_size.h>
 
+#include <sys/random.h>
+
 #include "pthread.hh"
+
+#ifndef STACK_RND_MASK
+#define STACK_RND_MASK 0x3fffff000000
+#endif
+
+#ifndef BIT_CHECK
+#define BIT_CHECK 0x300000000000
+#endif
 
 namespace pthread_private {
 
@@ -88,7 +98,7 @@ namespace pthread_private {
     class pthread {
     public:
         explicit pthread(void *(*start)(void *arg), void *arg, sigset_t sigset,
-            const thread_attr* attr, unsigned long stackRand);
+            const thread_attr* attr);
         void start();
         static pthread* from_libc(pthread_t p);
         pthread_t to_libc();
@@ -114,12 +124,12 @@ namespace pthread_private {
     };
 
     pthread::pthread(void *(*start)(void *arg), void *arg, sigset_t sigset,
-                     const thread_attr* attr, unsigned long stackRand)
+                     const thread_attr* attr)
             : _thread(sched::thread::make([=] {
                 current_pthread = to_libc();
                 sigprocmask(SIG_SETMASK, &sigset, nullptr);
                 _retval = start(arg);
-            }, attributes(attr ? *attr : thread_attr()), false, true, stackRand))
+            }, attributes(attr ? *attr : thread_attr()), false, true))
     {
         _thread->set_cleanup([=] { delete this; });
     }
@@ -209,7 +219,7 @@ namespace pthread_private {
 using namespace pthread_private;
 
 int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
-        void *(*start_routine) (void *), void *arg, unsigned long stackRand)
+        void *(*start_routine) (void *), void *arg)
 {
     pthread *t;
     sigset_t sigset;
@@ -254,7 +264,7 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
                "CPU set.\n The cpu_set_t provided will be ignored.\n");
     }
 
-    t = new pthread(start_routine, arg, sigset, &tmp, stackRand);
+    t = new pthread(start_routine, arg, sigset, &tmp);
     *thread = t->to_libc();
     t->start();
     return 0;
@@ -665,9 +675,36 @@ int pthread_cond_clockwait(pthread_cond_t *__restrict cond,
     return EINVAL;
 }
 
-int pthread_attr_init(pthread_attr_t *attr, unsigned long ST)
+int pthread_attr_init(pthread_attr_t *attr, bool enable_randomization)
 {
-    new (attr) thread_attr((void*)ST);
+    if( enable_randomization ){
+        void *randValue = nullptr;
+        ssize_t retValue = 0;
+
+        retValue = getrandom(&randValue, sizeof(randValue), 0);
+
+        if( -1 == retValue ){
+            printf("ERROR getting random number\n");
+        } else if ( 1 >= retValue ){
+            printf("ERROR not enough bytes return\n");
+        } else {
+
+            // Ensure the random number has enough bits set
+            while( !(((unsigned long)randValue) & BIT_CHECK) ) {
+                retValue = getrandom(&randValue, sizeof(randValue), 0);
+                printf("%d\n", !(((unsigned long)(randValue) & BIT_CHECK)));
+                printf("%lx\n", randValue);
+            }
+
+            printf("randValue = 0x%lx\n", randValue);
+            randValue = (void*)( (unsigned long)randValue & STACK_RND_MASK);
+            printf("random mask applied = 0x%lx\n", randValue);
+        }
+
+        new (attr) thread_attr(randValue);
+    } else {
+        new (attr) thread_attr();
+    }
     return 0;
 }
 
