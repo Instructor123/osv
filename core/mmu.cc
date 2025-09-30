@@ -1316,13 +1316,47 @@ ulong populate_vma(vma *vma, void *v, size_t size, bool write = false)
     return total;
 }
 
+#include <sys/random.h>
+#define BIT_CHECK 0x300000000000
+#define STACK_RND_MASK 0x3fffff000000
+
 void* map_anon(const void* addr, size_t size, unsigned flags, unsigned perm)
 {
+    // if( 1 == (0x32 && flags) ){
+    if( 2 < flags ){
+        
+        printf("Going to make some random love!\n");
+        void *randValue = nullptr;
+        ssize_t retValue = 0;
+
+        retValue = getrandom(&randValue, sizeof(randValue), 0);
+
+        if( -1 == retValue ){
+            printf("ERROR getting random number\n");
+            printf("ERRNO = %d\n", errno);
+        } else if ( 1 >= retValue ){
+            printf("ERROR not enough bytes return\n");
+        } else {
+
+            // Ensure the random number has enough bits set
+            while( !(((unsigned long)randValue) & BIT_CHECK) ) {
+                printf("0x%lx\n", randValue);
+                retValue = getrandom(&randValue, sizeof(randValue), 0);
+                printf("%d\n", !(((unsigned long)(randValue) & BIT_CHECK)));
+                printf("0x%lx\n", randValue);
+            }
+
+            printf("randValue = 0x%lx\n", randValue);
+            randValue = (void*)( (unsigned long)randValue & STACK_RND_MASK);
+            printf("random mask applied = 0x%lx\n", randValue);
+        }
+    }
     bool search = !(flags & mmap_fixed);
     printf("search value = %d and !(flags & mmap-fixed) = %d\n", search, !(flags & mmap_fixed));
     size = align_up(size, mmu::page_size);
     auto start = reinterpret_cast<uintptr_t>(addr);
     printf("map_anon start value = 0x%lx\n", start);
+    printf("flags value = %lx\n", flags);
     
     auto* vma = new mmu::anon_vma(addr_range(start, start + size), perm, flags);
     PREVENT_STACK_PAGE_FAULT
