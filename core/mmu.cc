@@ -34,6 +34,17 @@
 #include <osv/kernel_config_lazy_stack_invariant.h>
 #include <osv/kernel_config_memory_jvm_balloon.h>
 
+#include <random>
+#include <sys/random.h>
+
+#ifndef STACK_RND_MASK
+#define STACK_RND_MASK 0x3fffff000000
+#endif
+
+#ifndef BIT_CHECK
+#define BIT_CHECK 0x300000000000
+#endif
+
 // FIXME: Without this pragma, we get a lot of warnings that I don't know
 // how to explain or fix. For now, let's just ignore them :-(
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
@@ -1316,53 +1327,53 @@ ulong populate_vma(vma *vma, void *v, size_t size, bool write = false)
     return total;
 }
 
-#include <sys/random.h>
-#define BIT_CHECK 0x300000000000
-#define STACK_RND_MASK 0x3fffff000000
+//this update doesn't feel right...double check it.
+void seed_generator(void **s){
+    std::random_device rd;
+
+    (*s) = (void*)((uint64_t{rd()} << 32) ^ uint64_t{rd()});
+}
+
+bool check_rdrand_support(){
+    unsigned int eax, ebx, ecx, edx;
+    __asm__ __volatile__("cpuid"
+        : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
+        : "a"(1));  // eax=1 for feature information
+    return (ecx >> 30) & 1;
+}
+
+void rand_gen(void **value, unsigned long MASK){
+
+    if( check_rdrand_support() ){
+        seed_generator(value);
+
+        // Ensure the random number has enough bits set
+        while( !(((unsigned long)(*value)) & BIT_CHECK) ) {
+             seed_generator(value);
+        }
+
+        (*value) = (void*)( (unsigned long)(*value) & MASK);
+    }
+}
 
 void* map_anon(const void* addr, size_t size, unsigned flags, unsigned perm)
 {
-    // if( 1 == (0x32 && flags) ){
-    if( 2 < flags ){
-        
-        printf("Going to make some random love!\n");
-        void *randValue = nullptr;
-        ssize_t retValue = 0;
-
-        retValue = getrandom(&randValue, sizeof(randValue), 0);
-
-        if( -1 == retValue ){
-            printf("ERROR getting random number\n");
-            printf("ERRNO = %d\n", errno);
-        } else if ( 1 >= retValue ){
-            printf("ERROR not enough bytes return\n");
-        } else {
-
-            // Ensure the random number has enough bits set
-            while( !(((unsigned long)randValue) & BIT_CHECK) ) {
-                printf("0x%lx\n", randValue);
-                retValue = getrandom(&randValue, sizeof(randValue), 0);
-                printf("%d\n", !(((unsigned long)(randValue) & BIT_CHECK)));
-                printf("0x%lx\n", randValue);
-            }
-
-            printf("randValue = 0x%lx\n", randValue);
-            randValue = (void*)( (unsigned long)randValue & STACK_RND_MASK);
-            printf("random mask applied = 0x%lx\n", randValue);
-        }
-    }
-    bool search = !(flags & mmap_fixed);
-    printf("search value = %d and !(flags & mmap-fixed) = %d\n", search, !(flags & mmap_fixed));
-    size = align_up(size, mmu::page_size);
     auto start = reinterpret_cast<uintptr_t>(addr);
-    printf("map_anon start value = 0x%lx\n", start);
-    printf("flags value = %lx\n", flags);
+
+    if( (flags & mmu::mmap_rand) ){
+        void *randValue = nullptr;
+        rand_gen(&randValue, STACK_RND_MASK);
+
+        start = reinterpret_cast<uintptr_t>(randValue);
+    }
+
+    bool search = !(flags & mmap_fixed);
+    size = align_up(size, mmu::page_size);
     
     auto* vma = new mmu::anon_vma(addr_range(start, start + size), perm, flags);
     PREVENT_STACK_PAGE_FAULT
     SCOPE_LOCK(vma_list_mutex.for_write());
     auto v = (void*) allocate(vma, start, size, search);
-    printf("vma-addr() (which is the _range.start value) = 0x%lx\n", vma->addr());
     if (flags & mmap_populate) {
         populate_vma(vma, v, size);
     }

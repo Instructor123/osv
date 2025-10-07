@@ -249,7 +249,6 @@ void application::start()
     // FIXME: we cannot create the thread inside the constructor because
     // the thread would attempt to call shared_from_this() before object
     // is constructed which is illegal.
-    printf("here in core/start\n");
     
     override_current_app = this;
     // Taken from loader.cc 845-852.

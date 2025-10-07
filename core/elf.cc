@@ -36,6 +36,17 @@
 #include "arch-elf.hh"
 #include "cpuid.hh"
 
+#include <random>
+#include <sys/random.h>
+
+#ifndef ELF_RND_MASK
+#define ELF_RND_MASK 0x1fffff000000
+#endif
+
+#ifndef BIT_CHECK
+#define BIT_CHECK 0x300000000000
+#endif
+
 #if CONF_elf_debug
 #define elf_debug(format,...) kprintf("ELF [tid:%d, mod:%d, %s]: " format, sched::thread::current()->id(), _module_index, _pathname.c_str(), ##__VA_ARGS__)
 #else
@@ -1340,12 +1351,48 @@ void setup_missing_symbols_detector()
     mmu::mprotect(missing_symbols_page_addr, mmu::page_size, 0);
 }
 
+bool check_rdrand_support(){
+    unsigned int eax, ebx, ecx, edx;
+    __asm__ __volatile__("cpuid"
+        : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
+        : "a"(1));  // eax=1 for feature information
+    return (ecx >> 30) & 1;
+}
+
+//this update doesn't feel right...double check it.
+void seed_generator(void **s){
+    std::random_device rd;
+
+    (*s) = (void*)((uint64_t{rd()} << 32) ^ uint64_t{rd()});
+}
+
+void rand_gen(void **value, unsigned long MASK){
+
+    if( check_rdrand_support() ){
+        seed_generator(value);
+
+        //seed_generator can return 0x0 when early enough in the boot process.
+        if( 0 != (*value) ){
+            // Ensure the random number has enough bits set
+            while( !(((unsigned long)(*value)) & BIT_CHECK) ) {
+                seed_generator(value);
+            }
+        } else {
+            (*value) = (void*)program_base;
+        }
+        (*value) = (void*)( (unsigned long)(*value) & MASK);
+    }
+}
+
 program* s_program;
 
 void create_main_program()
 {
     assert(!s_program);
-    s_program = new elf::program();
+    void *addr = nullptr;
+
+    rand_gen(&addr, ELF_RND_MASK);
+    s_program = new elf::program(addr);
 }
 
 program::program(void* addr)

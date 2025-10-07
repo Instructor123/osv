@@ -34,17 +34,7 @@
 #include <osv/kernel_config_lazy_stack_invariant.h>
 #include <osv/kernel_config_threads_default_pthread_stack_size.h>
 
-#include <sys/random.h>
-
 #include "pthread.hh"
-
-#ifndef STACK_RND_MASK
-#define STACK_RND_MASK 0x3fffff000000
-#endif
-
-#ifndef BIT_CHECK
-#define BIT_CHECK 0x300000000000
-#endif
 
 namespace pthread_private {
 
@@ -118,9 +108,9 @@ namespace pthread_private {
         bool detached;
         cpu_set_t *cpuset;
         sched::cpu *cpu;
-        void *stack_value;
-        thread_attr() : stack_begin{}, stack_size{CONF_threads_default_pthread_stack_size}, guard_size{4096}, detached{false}, cpuset{nullptr}, cpu{nullptr}, stack_value{} {}
-        thread_attr(void*ST) : stack_begin{}, stack_size{CONF_threads_default_pthread_stack_size}, guard_size{4096}, detached{false}, cpuset{nullptr}, cpu{nullptr}, stack_value{ST} {}
+        bool random_stack;
+        thread_attr() : stack_begin{}, stack_size{CONF_threads_default_pthread_stack_size}, guard_size{4096}, detached{false}, cpuset{nullptr}, cpu{nullptr}, random_stack{} {}
+        thread_attr(bool RS) : stack_begin{}, stack_size{CONF_threads_default_pthread_stack_size}, guard_size{4096}, detached{false}, cpuset{nullptr}, cpu{nullptr}, random_stack{RS} {}
     };
 
     pthread::pthread(void *(*start)(void *arg), void *arg, sigset_t sigset,
@@ -163,13 +153,11 @@ namespace pthread_private {
 #endif
         void *addr = NULL;
 
-        printf("in allocate_stack, attr.stack_value = 0x%lx\n", attr.stack_value);
-        if (attr.stack_value) {
-            addr = mmu::map_anon(attr.stack_value, size, stack_flags, mmu::perm_rw);
-        } else {
-            addr = mmu::map_anon(nullptr, size, stack_flags, mmu::perm_rw);
+        if( attr.random_stack ){
+            stack_flags |= mmu::mmap_rand;
         }
-        // void *addr = mmu::map_anon(nullptr, size, stack_flags, mmu::perm_rw);
+    
+        addr = mmu::map_anon(nullptr, size, stack_flags, mmu::perm_rw);
         mmu::mprotect(addr, attr.guard_size, 0);
         sched::thread::stack_info si{addr, size};
         si.deleter = free_stack;
@@ -677,34 +665,7 @@ int pthread_cond_clockwait(pthread_cond_t *__restrict cond,
 
 int pthread_attr_init(pthread_attr_t *attr, bool enable_randomization)
 {
-    if( enable_randomization ){
-        void *randValue = nullptr;
-        ssize_t retValue = 0;
-
-        retValue = getrandom(&randValue, sizeof(randValue), 0);
-
-        if( -1 == retValue ){
-            printf("ERROR getting random number\n");
-        } else if ( 1 >= retValue ){
-            printf("ERROR not enough bytes return\n");
-        } else {
-
-            // Ensure the random number has enough bits set
-            while( !(((unsigned long)randValue) & BIT_CHECK) ) {
-                retValue = getrandom(&randValue, sizeof(randValue), 0);
-                printf("%d\n", !(((unsigned long)(randValue) & BIT_CHECK)));
-                printf("%lx\n", randValue);
-            }
-
-            printf("randValue = 0x%lx\n", randValue);
-            randValue = (void*)( (unsigned long)randValue & STACK_RND_MASK);
-            printf("random mask applied = 0x%lx\n", randValue);
-        }
-
-        new (attr) thread_attr(randValue);
-    } else {
-        new (attr) thread_attr();
-    }
+    new (attr) thread_attr(enable_randomization);
     return 0;
 }
 
