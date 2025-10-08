@@ -38,7 +38,7 @@
 
 #include <random>
 #include <sys/random.h>
-#include <stubbing.hh>
+#include <osv/stubbing.hh>
 
 #ifndef ELF_RND_MASK
 #define ELF_RND_MASK 0x1fffff000000

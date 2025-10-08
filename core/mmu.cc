@@ -36,7 +36,7 @@
 
 #include <random>
 #include <sys/random.h>
-#include <stubbing.hh>
+#include <osv/stubbing.hh>
 
 #ifndef STACK_RND_MASK
 #define STACK_RND_MASK 0x3fffff000000
