@@ -106,8 +106,9 @@ void premain()
     /* besides reporting the OSV version, this string has the function
        to check if the early console really works early enough,
        without depending on prior initialization. */
+    debug_early("before osv\n");
     debug_early("OSv " OSV_VERSION "\n");
-
+    debug_early("after osv\n");
     arch_init_premain();
 
 #ifdef __x86_64__

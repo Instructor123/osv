@@ -1376,6 +1376,7 @@ void rand_gen(void **value, unsigned long MASK){
             // Ensure the random number has enough bits set
             while( !(((unsigned long)(*value)) & BIT_CHECK) ) {
                 seed_generator(value);
+                debug_always("in elf.cc\n");
             }
         } else {
             (*value) = (void*)program_base;
