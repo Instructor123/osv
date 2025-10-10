@@ -1337,6 +1337,7 @@ void seed_generator(void **s){
 }
 
 bool check_rdrand_support(){
+    debug_always("check_rdrand_support\n");
     unsigned int eax, ebx, ecx, edx;
     __asm__ __volatile__("cpuid"
         : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
