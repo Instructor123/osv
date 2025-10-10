@@ -1348,6 +1348,7 @@ bool check_rdrand_support(){
     //     : "a"(1));  // eax=1 for feature information
     debug_always("just a double check\n");
     __get_cpuid(1, &eax, &ebx, &ecx, &edx);
+    debug_always("just a double check\n");
     return (ecx >> 30) & 1;
 }
 
