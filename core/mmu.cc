@@ -1368,6 +1368,7 @@ void rand_gen(void **value, unsigned long MASK){
 
         (*value) = (void*)( (unsigned long)(*value) & MASK);
     } else {
+        debug_always("in the else\n");
         (*value) = 0x0; //this will trigger the default value to be assigned.
     }
 }
