@@ -1380,7 +1380,7 @@ void* map_anon(const void* addr, size_t size, unsigned flags, unsigned perm)
     if( (flags & mmu::mmap_rand) ){
         void *randValue = nullptr;
         rand_gen(&randValue, STACK_RND_MASK);
-
+        debug_always("after rand 0x%lx\n", randValue);
         start = reinterpret_cast<uintptr_t>(randValue);
     }
 
@@ -1390,7 +1390,9 @@ void* map_anon(const void* addr, size_t size, unsigned flags, unsigned perm)
     auto* vma = new mmu::anon_vma(addr_range(start, start + size), perm, flags);
     PREVENT_STACK_PAGE_FAULT
     SCOPE_LOCK(vma_list_mutex.for_write());
+    debug_always("before allocate 0x%lx\n", start);
     auto v = (void*) allocate(vma, start, size, search);
+    debug_always("after allocate 0x%lx\n", start);
     if (flags & mmap_populate) {
         populate_vma(vma, v, size);
     }
