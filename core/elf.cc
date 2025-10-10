@@ -1368,7 +1368,7 @@ void seed_generator(void **s){
 }
 
 void rand_gen(void **value, unsigned long MASK){
-
+    debug_always("in elf.cc\n");
     if( check_rdrand_support() ){
         seed_generator(value);
 

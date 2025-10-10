@@ -63,6 +63,8 @@
 #include <dlfcn.h>
 #include <osv/string_utils.hh>
 
+#include <osv/stubbing.hh>
+
 using namespace osv;
 using namespace osv::clock::literals;
 
@@ -848,6 +850,7 @@ void main_cont(int loader_argc, char** loader_argv)
     for (size_t ii=0; ii<sched::cpus.size(); ii++) {
         CPU_SET(ii, &cpuset);
     }
+    debug_always("pthread_attr_init location\n");
     pthread_attr_t attr;
     pthread_attr_init(&attr, true);            // Updated on 9/8/2025 to account for ASLR-based randomization in pthread_attr_init.
     pthread_attr_setaffinity_np(&attr, sizeof(cpuset), &cpuset);
