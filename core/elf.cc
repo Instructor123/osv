@@ -1393,7 +1393,7 @@ void rand_gen(void **value, unsigned long MASK){
         (*value) = (void*)( (unsigned long)(*value) & MASK);
     } else {
         debug_always("in elf.cc else of rand_gen\n");
-        (*value) = 0x0;
+        (*value) = nullptr;
     }
 }
 
@@ -1405,6 +1405,7 @@ void create_main_program()
     void *addr = nullptr;
 
     rand_gen(&addr, ELF_RND_MASK);
+    debug_always("in create_main_Program after rand_gen addr = 0x%lx\n", addr);
     s_program = new elf::program(addr);
 }
 
