@@ -1214,6 +1214,7 @@ public:
 
 uintptr_t allocate(vma *v, uintptr_t start, size_t size, bool search)
 {
+    debug_always("start = 0x%lx, search = %d\n", start, search);
     if (search) {
         // search for unallocated hole around start
         if (!start) {
@@ -1338,7 +1339,7 @@ void seed_generator(void **s){
 }
 
 bool check_rdrand_support(){
-    debug_always("check_rdrand_support\n");
+    debug_always("check_rdrand_support in mmu.cc\n");
     unsigned int eax = 0;
     unsigned int ebx = 0;
     unsigned int ecx = 0;
