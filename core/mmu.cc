@@ -1367,8 +1367,9 @@ void rand_gen(void **value, unsigned long MASK){
         }
 
         (*value) = (void*)( (unsigned long)(*value) & MASK);
+    } else {
+        (*value) = 0x0; //this will trigger the default value to be assigned.
     }
-    debug_always("what happens here?\n");
 }
 
 void* map_anon(const void* addr, size_t size, unsigned flags, unsigned perm)
