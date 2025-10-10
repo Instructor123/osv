@@ -1393,6 +1393,7 @@ void* map_anon(const void* addr, size_t size, unsigned flags, unsigned perm)
     debug_always("before allocate 0x%lx\n", start);
     auto v = (void*) allocate(vma, start, size, search);
     debug_always("after allocate 0x%lx\n", start);
+    debug_always("v = 0x%lx\n", v);
     if (flags & mmap_populate) {
         populate_vma(vma, v, size);
     }
