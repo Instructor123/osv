@@ -39,6 +39,7 @@
 #include <random>
 #include <sys/random.h>
 #include <osv/stubbing.hh>
+#include <cpuid.h>
 
 #ifndef ELF_RND_MASK
 #define ELF_RND_MASK 0x1fffff000000
@@ -1353,10 +1354,17 @@ void setup_missing_symbols_detector()
 }
 
 bool check_rdrand_support(){
-    unsigned int eax, ebx, ecx, edx;
-    __asm__ __volatile__("cpuid"
-        : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
-        : "a"(1));  // eax=1 for feature information
+    debug_always("check_rdrand_support in elf.cc\n");
+    unsigned int eax = 0;
+    unsigned int ebx = 0;
+    unsigned int ecx = 0;
+    unsigned int edx = 0;
+    // __asm__ __volatile__("cpuid"
+    //     : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
+    //     : "a"(1));  // eax=1 for feature information
+    debug_always("just a double check\n");
+    __get_cpuid(1, &eax, &ebx, &ecx, &edx);
+    debug_always("just a double check\n");
     return (ecx >> 30) & 1;
 }
 
@@ -1383,6 +1391,9 @@ void rand_gen(void **value, unsigned long MASK){
             (*value) = (void*)program_base;
         }
         (*value) = (void*)( (unsigned long)(*value) & MASK);
+    } else {
+        debug_always("in elf.cc else of rand_gen\n");
+        (*value) = 0x0;
     }
 }
 
