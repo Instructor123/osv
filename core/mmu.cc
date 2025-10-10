@@ -1330,6 +1330,7 @@ ulong populate_vma(vma *vma, void *v, size_t size, bool write = false)
 
 //this update doesn't feel right...double check it.
 void seed_generator(void **s){
+    debug_always("seed_generator top\n");
     std::random_device rd;
 
     (*s) = (void*)((uint64_t{rd()} << 32) ^ uint64_t{rd()});
@@ -1346,12 +1347,15 @@ bool check_rdrand_support(){
 void rand_gen(void **value, unsigned long MASK){
     debug_always("top of rand_gen\n");
     if( check_rdrand_support() ){
+        debug_always("before seed 1\n");
         seed_generator(value);
+        debug_always("after seed 1\n");
 
         // Ensure the random number has enough bits set
         while( !(((unsigned long)(*value)) & BIT_CHECK) ) {
-             seed_generator(value);
-             debug_always("in mmu.cc\n");
+            debug_always("in mmu.cc\n"); 
+            seed_generator(value);
+            debug_always("after seed gen\n");
         }
 
         (*value) = (void*)( (unsigned long)(*value) & MASK);
