@@ -1368,6 +1368,7 @@ void rand_gen(void **value, unsigned long MASK){
 
         (*value) = (void*)( (unsigned long)(*value) & MASK);
     }
+    debug_always("what happens here?\n");
 }
 
 void* map_anon(const void* addr, size_t size, unsigned flags, unsigned perm)
