@@ -37,6 +37,7 @@
 #include <random>
 #include <sys/random.h>
 #include <osv/stubbing.hh>
+#include <cpuid.h>
 
 #ifndef STACK_RND_MASK
 #define STACK_RND_MASK 0x3fffff000000
@@ -1339,10 +1340,11 @@ void seed_generator(void **s){
 bool check_rdrand_support(){
     debug_always("check_rdrand_support\n");
     unsigned int eax, ebx, ecx, edx;
-    __asm__ __volatile__("cpuid"
-        : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
-        : "a"(1));  // eax=1 for feature information
+    // __asm__ __volatile__("cpuid"
+    //     : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
+    //     : "a"(1));  // eax=1 for feature information
     debug_always("just a double check\n");
+    __get_cpuid(1, &eax, &ebx, &ecx, &edx);
     return (ecx >> 30) & 1;
 }
 
