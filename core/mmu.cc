@@ -1344,7 +1344,7 @@ bool check_rdrand_support(){
 }
 
 void rand_gen(void **value, unsigned long MASK){
-
+    debug_always("top of rand_gen\n");
     if( check_rdrand_support() ){
         seed_generator(value);
 
