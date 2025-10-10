@@ -1342,6 +1342,7 @@ bool check_rdrand_support(){
     __asm__ __volatile__("cpuid"
         : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
         : "a"(1));  // eax=1 for feature information
+    debug_always("just a double check\n");
     return (ecx >> 30) & 1;
 }
 
