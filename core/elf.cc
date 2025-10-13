@@ -1406,7 +1406,11 @@ void create_main_program()
 
     rand_gen(&addr, ELF_RND_MASK);
     debug_always("in create_main_Program after rand_gen addr = 0x%lx\n", addr);
-    s_program = new elf::program(addr);
+    if( nullptr != addr ){
+        s_program = new elf::program(addr);
+    } else {
+        s_program = new elf::program();
+    }
 }
 
 program::program(void* addr)
