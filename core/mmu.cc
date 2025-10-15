@@ -1394,7 +1394,7 @@ void* map_anon(const void* addr, size_t size, unsigned flags, unsigned perm)
     auto* vma = new mmu::anon_vma(addr_range(start, start + size), perm, flags);
     PREVENT_STACK_PAGE_FAULT
     SCOPE_LOCK(vma_list_mutex.for_write());
-    debug_always("before allocate 0x%lx\n", start);
+    debug_always("before allocate in map_anon 0x%lx\n", start);
     auto v = (void*) allocate(vma, start, size, search);
     debug_always("after allocate 0x%lx\n", start);
     debug_always("v = 0x%lx\n", v);
