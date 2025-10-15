@@ -1362,9 +1362,10 @@ bool check_rdrand_support(){
     // __asm__ __volatile__("cpuid"
     //     : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
     //     : "a"(1));  // eax=1 for feature information
-    debug_always("just a double check\n");
+    debug_always("just a double check in elf.cc\n");
     __get_cpuid(1, &eax, &ebx, &ecx, &edx);
-    debug_always("just a double check\n");
+    debug_always("just a double check in elf.cc\n");
+    printf("0x%lx\n", (ecx >> 30) & 1);
     return (ecx >> 30) & 1;
 }
 
@@ -1386,6 +1387,7 @@ void rand_gen(void **value, unsigned long MASK){
             while( !(((unsigned long)(*value)) & BIT_CHECK) ) {
                 seed_generator(value);
                 debug_always("in elf.cc\n");
+                printf("0x%lx\n", value);
             }
         } else {
             (*value) = (void*)program_base;

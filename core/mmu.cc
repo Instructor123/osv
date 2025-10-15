@@ -1336,6 +1336,7 @@ void seed_generator(void **s){
     std::random_device rd;
 
     (*s) = (void*)((uint64_t{rd()} << 32) ^ uint64_t{rd()});
+    printf("0x%ln\n", (*s));
 }
 
 bool check_rdrand_support(){
@@ -1347,9 +1348,10 @@ bool check_rdrand_support(){
     // __asm__ __volatile__("cpuid"
     //     : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
     //     : "a"(1));  // eax=1 for feature information
-    debug_always("just a double check\n");
+    debug_always("just a double check mmu.cc\n");
     __get_cpuid(1, &eax, &ebx, &ecx, &edx);
-    debug_always("just a double check\n");
+    debug_always("just a double check mmu.cc\n");
+    printf("0x%lx\n", (ecx >> 30) & 1);
     return (ecx >> 30) & 1;
 }
 
@@ -1365,6 +1367,7 @@ void rand_gen(void **value, unsigned long MASK){
             debug_always("in mmu.cc\n"); 
             seed_generator(value);
             debug_always("after seed gen\n");
+            printf("0x%lx\n", value);
         }
 
         (*value) = (void*)( (unsigned long)(*value) & MASK);
