@@ -1360,7 +1360,7 @@ void rand_gen(void **value, unsigned long MASK){
         debug_always("before seed 1\n");
         seed_generator(value);
         debug_always("after seed 1\n");
-        printf("0x%lx\n", value);
+        printf("0x%lx\n", (*value));
 
         // Ensure the random number has enough bits set
         while( !(((unsigned long)(*value)) & BIT_CHECK) ) {

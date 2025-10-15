@@ -480,6 +480,7 @@ void object::load_segments()
     for (unsigned i = 0; i < _ehdr.e_phnum; ++i) {
         auto &phdr = _phdrs[i];
         if (phdr.p_type == PT_LOAD) {
+            debug_always("in load_segments, phdr-vaddr = 0x%lx\n", phdr.p_vaddr);
             load_segment(phdr);
         }
     }
@@ -1387,7 +1388,7 @@ void rand_gen(void **value, unsigned long MASK){
             while( !(((unsigned long)(*value)) & BIT_CHECK) ) {
                 seed_generator(value);
                 debug_always("in elf.cc\n");
-                printf("0x%lx\n", value);
+                printf("0x%lx\n", (*value));
             }
         } else {
             (*value) = (void*)program_base;
@@ -1425,6 +1426,8 @@ program::program(void* addr)
 #else
     void *program_base = (void*)(ELF_IMAGE_START);
 #endif
+
+    debug_always("program_base = 0x%lx\n", program_base);
     _core = std::make_shared<memory_image>(*this, program_base);
     _core->set_base(program_base);
     assert(_core->module_index() == core_module_index);
