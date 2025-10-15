@@ -1336,7 +1336,6 @@ void seed_generator(void **s){
     std::random_device rd;
 
     (*s) = (void*)((uint64_t{rd()} << 32) ^ uint64_t{rd()});
-    printf("0x%ln\n", (*s));
 }
 
 bool check_rdrand_support(){
@@ -1361,6 +1360,7 @@ void rand_gen(void **value, unsigned long MASK){
         debug_always("before seed 1\n");
         seed_generator(value);
         debug_always("after seed 1\n");
+        printf("0x%lx\n", value);
 
         // Ensure the random number has enough bits set
         while( !(((unsigned long)(*value)) & BIT_CHECK) ) {
