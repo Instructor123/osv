@@ -424,6 +424,8 @@ void file::load_segment(const Elf64_Phdr& phdr)
     ulong filesz = align_up(filesz_unaligned, mmu::page_size);
     ulong memsz = align_up(phdr.p_vaddr + phdr.p_memsz, mmu::page_size) - vstart;
 
+    printf("load_segment phdr->vaddr = 0x%lx\n", phdr.p_vaddr);
+
     unsigned perm = get_segment_mmap_permissions(phdr);
 
     auto flag = mmu::mmap_fixed | (mlocked() ? mmu::mmap_populate : 0);
@@ -480,7 +482,6 @@ void object::load_segments()
     for (unsigned i = 0; i < _ehdr.e_phnum; ++i) {
         auto &phdr = _phdrs[i];
         if (phdr.p_type == PT_LOAD) {
-            debug_always("in load_segments, phdr-vaddr = 0x%lx\n", phdr.p_vaddr);
             load_segment(phdr);
         }
     }
@@ -1355,22 +1356,18 @@ void setup_missing_symbols_detector()
 }
 
 bool check_rdrand_support(){
-    debug_always("check_rdrand_support in elf.cc\n");
     unsigned int eax = 0;
     unsigned int ebx = 0;
     unsigned int ecx = 0;
     unsigned int edx = 0;
+    //Leaving asm code for posterity, function call is safer.
     // __asm__ __volatile__("cpuid"
     //     : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
     //     : "a"(1));  // eax=1 for feature information
-    debug_always("just a double check in elf.cc\n");
     __get_cpuid(1, &eax, &ebx, &ecx, &edx);
-    debug_always("just a double check in elf.cc\n");
-    printf("0x%lx\n", (ecx >> 30) & 1);
     return (ecx >> 30) & 1;
 }
 
-//this update doesn't feel right...double check it.
 void seed_generator(void **s){
     std::random_device rd;
 
@@ -1378,7 +1375,6 @@ void seed_generator(void **s){
 }
 
 void rand_gen(void **value, unsigned long MASK){
-    debug_always("in elf.cc\n");
     if( check_rdrand_support() ){
         seed_generator(value);
 
@@ -1387,15 +1383,12 @@ void rand_gen(void **value, unsigned long MASK){
             // Ensure the random number has enough bits set
             while( !(((unsigned long)(*value)) & BIT_CHECK) ) {
                 seed_generator(value);
-                debug_always("in elf.cc\n");
-                printf("0x%lx\n", (*value));
             }
         } else {
             (*value) = (void*)program_base;
         }
         (*value) = (void*)( (unsigned long)(*value) & MASK);
     } else {
-        debug_always("in elf.cc else of rand_gen\n");
         (*value) = nullptr;
     }
 }

@@ -1214,7 +1214,6 @@ public:
 
 uintptr_t allocate(vma *v, uintptr_t start, size_t size, bool search)
 {
-    debug_always("start = 0x%lx, search = %d\n", start, search);
     if (search) {
         // search for unallocated hole around start
         if (!start) {
@@ -1330,49 +1329,36 @@ ulong populate_vma(vma *vma, void *v, size_t size, bool write = false)
     return total;
 }
 
-//this update doesn't feel right...double check it.
+bool check_rdrand_support(){
+    unsigned int eax = 0;
+    unsigned int ebx = 0;
+    unsigned int ecx = 0;
+    unsigned int edx = 0;
+    //Leaving asm code for posterity, function call is safer.
+    // __asm__ __volatile__("cpuid"
+    //     : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
+    //     : "a"(1));  // eax=1 for feature information
+    __get_cpuid(1, &eax, &ebx, &ecx, &edx);
+    return (ecx >> 30) & 1;
+}
+
 void seed_generator(void **s){
-    debug_always("seed_generator top\n");
     std::random_device rd;
 
     (*s) = (void*)((uint64_t{rd()} << 32) ^ uint64_t{rd()});
 }
 
-bool check_rdrand_support(){
-    debug_always("check_rdrand_support in mmu.cc\n");
-    unsigned int eax = 0;
-    unsigned int ebx = 0;
-    unsigned int ecx = 0;
-    unsigned int edx = 0;
-    // __asm__ __volatile__("cpuid"
-    //     : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
-    //     : "a"(1));  // eax=1 for feature information
-    debug_always("just a double check mmu.cc\n");
-    __get_cpuid(1, &eax, &ebx, &ecx, &edx);
-    debug_always("just a double check mmu.cc\n");
-    printf("0x%lx\n", (ecx >> 30) & 1);
-    return (ecx >> 30) & 1;
-}
-
 void rand_gen(void **value, unsigned long MASK){
-    debug_always("top of rand_gen\n");
     if( check_rdrand_support() ){
-        debug_always("before seed 1\n");
         seed_generator(value);
-        debug_always("after seed 1\n");
-        printf("0x%lx\n", (*value));
 
         // Ensure the random number has enough bits set
         while( !(((unsigned long)(*value)) & BIT_CHECK) ) {
-            debug_always("in mmu.cc\n"); 
             seed_generator(value);
-            debug_always("after seed gen\n");
-            printf("0x%lx\n", value);
         }
 
         (*value) = (void*)( (unsigned long)(*value) & MASK);
     } else {
-        debug_always("in the else\n");
         (*value) = nullptr; //this will trigger the default value to be assigned.
     }
 }
@@ -1384,7 +1370,6 @@ void* map_anon(const void* addr, size_t size, unsigned flags, unsigned perm)
     if( (flags & mmu::mmap_rand) ){
         void *randValue = nullptr;
         rand_gen(&randValue, STACK_RND_MASK);
-        debug_always("after rand 0x%lx\n", randValue);
         start = reinterpret_cast<uintptr_t>(randValue);
     }
 
@@ -1394,10 +1379,7 @@ void* map_anon(const void* addr, size_t size, unsigned flags, unsigned perm)
     auto* vma = new mmu::anon_vma(addr_range(start, start + size), perm, flags);
     PREVENT_STACK_PAGE_FAULT
     SCOPE_LOCK(vma_list_mutex.for_write());
-    debug_always("before allocate in map_anon 0x%lx\n", start);
     auto v = (void*) allocate(vma, start, size, search);
-    debug_always("after allocate 0x%lx\n", start);
-    debug_always("v = 0x%lx\n", v);
     if (flags & mmap_populate) {
         populate_vma(vma, v, size);
     }
