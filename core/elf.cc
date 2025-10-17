@@ -424,8 +424,6 @@ void file::load_segment(const Elf64_Phdr& phdr)
     ulong filesz = align_up(filesz_unaligned, mmu::page_size);
     ulong memsz = align_up(phdr.p_vaddr + phdr.p_memsz, mmu::page_size) - vstart;
 
-    printf("load_segment phdr->vaddr = 0x%lx\n", phdr.p_vaddr);
-
     unsigned perm = get_segment_mmap_permissions(phdr);
 
     auto flag = mmu::mmap_fixed | (mlocked() ? mmu::mmap_populate : 0);
@@ -1403,10 +1401,8 @@ void create_main_program()
     rand_gen(&addr, ELF_RND_MASK);
     debug_always("in create_main_Program after rand_gen addr = 0x%lx\n", addr);
     if( nullptr != addr ){
-        debug_always("calling program(addr)\n");
         s_program = new elf::program(addr);
     } else {
-        debug_always("calling program()\n");
         s_program = new elf::program();
     }
 }
@@ -1419,8 +1415,6 @@ program::program(void* addr)
 #else
     void *program_base = (void*)(ELF_IMAGE_START);
 #endif
-
-    debug_always("program_base = 0x%lx\n", program_base);
     _core = std::make_shared<memory_image>(*this, program_base);
     _core->set_base(program_base);
     assert(_core->module_index() == core_module_index);

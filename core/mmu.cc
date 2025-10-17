@@ -1371,6 +1371,7 @@ void* map_anon(const void* addr, size_t size, unsigned flags, unsigned perm)
         void *randValue = nullptr;
         rand_gen(&randValue, STACK_RND_MASK);
         start = reinterpret_cast<uintptr_t>(randValue);
+        debug_always("mmu rand_gen, new start value = 0x%lx\n", randValue);
     }
 
     bool search = !(flags & mmap_fixed);
