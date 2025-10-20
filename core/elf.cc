@@ -46,7 +46,7 @@
 #endif
 
 #ifndef BIT_CHECK
-#define BIT_CHECK 0x300000000000
+#define BIT_CHECK 0x100000000000
 #endif
 
 #if CONF_elf_debug
