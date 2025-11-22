@@ -38,7 +38,6 @@
 
 #include <random>
 #include <sys/random.h>
-#include <osv/stubbing.hh>
 #include <cpuid.h>
 
 #ifndef ELF_RND_MASK
