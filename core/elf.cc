@@ -427,6 +427,7 @@ void file::load_segment(const Elf64_Phdr& phdr)
 
     auto flag = mmu::mmap_fixed | (mlocked() ? mmu::mmap_populate : 0);
     mmu::map_file(_base + vstart, filesz, flag, perm, _f, align_down(phdr.p_offset, mmu::page_size));
+    debug_always("load_segment mmu call - 0x%lx\n", _base+vstart+filesz);
     if (phdr.p_filesz != phdr.p_memsz) {
         assert(perm & mmu::perm_write);
         memset(_base + vstart + filesz_unaligned, 0, filesz - filesz_unaligned);
@@ -1414,6 +1415,7 @@ program::program(void* addr)
 #else
     void *program_base = (void*)(ELF_IMAGE_START);
 #endif
+    debug_always("program_base = 0x%lx\n", program_base);
     _core = std::make_shared<memory_image>(*this, program_base);
     _core->set_base(program_base);
     assert(_core->module_index() == core_module_index);
